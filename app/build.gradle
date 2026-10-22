@@ -41,8 +41,8 @@ android {
         // downgrade the dependency to com.fasterxml.jackson to 2.13.5
         minSdkVersion 26
         targetSdkVersion 34
-        versionCode 15600
-        versionName "6.42"
+        versionCode 15700
+        versionName "6.43"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         dataBinding {
             enabled = true
@@ -98,7 +98,7 @@ android {
         buildConfigField("Boolean", "DEVICE_ADMIN_DEBUG", "false")
         // Set to true to enable kiosk mode even if the app can't draw over other windows
         // This may be required for weak devices where drawing over other windows is disabled by OS
-        buildConfigField("Boolean", "ENABLE_KIOSK_WITHOUT_OVERLAYS", "false")
+        buildConfigField("Boolean", "ENABLE_KIOSK_WITHOUT_OVERLAYS", "true")
         // Foreground service for MQTT: prevents OS from killing MQTT service on weak devices
         buildConfigField("Boolean", "MQTT_SERVICE_FOREGROUND", "true")
         // Set Headwind MDM to default launcher at early time of the first start
