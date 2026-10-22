@@ -67,4 +67,12 @@ interface IMdmApi {
      * to the supplied callback. Pass null to behave like forceConfigUpdate().
      */
     void forceConfigUpdateWithCallback(IMdmApiCallback callback);
+
+    // Added in library version 1.2.0
+    /**
+     * Save a Wi-Fi network as Device Owner and connect to it (blocks up to ~60 s: do not call from the UI thread).
+     * security: see WifiResult.SECURITY_*. Returns a WifiResult code.
+     * The previous network is restored if the new one does not work. Only the allowed kiosk app may call it.
+     */
+    int setWifi(String ssid, String password, int security, boolean hidden);
 }

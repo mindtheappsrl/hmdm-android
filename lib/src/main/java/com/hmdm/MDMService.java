@@ -52,6 +52,9 @@ public class MDMService {
     // version is renumbered upstream, update this value to match.
     public static final int CALLBACK_VERSION = 119;
 
+    // Minimal launcher API version that supports setWifi()
+    public static final int WIFI_VERSION = 120;
+
     private Context context;
     private IMdmApi mdmApi;
     private RemoteServiceConnection serviceConnection;
@@ -354,6 +357,31 @@ public class MDMService {
 
         try {
             return mdmApi.sendPush(apiKey, type, payload);
+        } catch (RemoteException e) {
+            throw new MDMException(MDMError.ERROR_INTERNAL);
+        }
+    }
+
+    /**
+     * Save a Wi-Fi network in the launcher (Device Owner) and connect to it.
+     * Blocks up to ~60 s: call it from a background thread.
+     *
+     * @param security one of WifiResult.SECURITY_*
+     * @return one of WifiResult.* (OK, WRONG_PASSWORD, NETWORK_NOT_FOUND, NO_INTERNET, NOT_ALLOWED, ERROR);
+     * the previous network is restored on any result other than OK
+     * @throws MDMException ERROR_VERSION if the launcher is older than 1.2.0 (120)
+     */
+    public int setWifi(String ssid, String password, int security, boolean hidden) throws MDMException {
+        if (mdmApi == null) {
+            throw new MDMException(MDMError.ERROR_DISCONNECTED);
+        }
+
+        if (getVersion() < WIFI_VERSION) {
+            throw new MDMException(MDMError.ERROR_VERSION);
+        }
+
+        try {
+            return mdmApi.setWifi(ssid, password, security, hidden);
         } catch (RemoteException e) {
             throw new MDMException(MDMError.ERROR_INTERNAL);
         }

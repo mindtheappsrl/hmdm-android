@@ -43,6 +43,9 @@ import com.hmdm.launcher.json.RemoteLogItem;
 import com.hmdm.launcher.pro.ProUtils;
 import com.hmdm.launcher.util.DeviceInfoProvider;
 import com.hmdm.launcher.util.RemoteLogger;
+import com.hmdm.launcher.util.WifiSetter;
+import com.hmdm.WifiResult;
+import android.os.Binder;
 import com.hmdm.launcher.util.Utils;
 import com.hmdm.launcher.worker.PushNotificationProcessor;
 
@@ -84,10 +87,10 @@ public class PluginApiService extends Service {
 
         @Override
         public int getVersion() {
-            // 1.1.9 - introduces forceConfigUpdateWithCallback().
+            // 1.1.9 - forceConfigUpdateWithCallback(); 1.2.0 (120) - setWifi().
             // Keep in sync with MDMService.CALLBACK_VERSION on the client/SDK side.
             // If this is renumbered when merged upstream, bump CALLBACK_VERSION to match.
-            return 119;
+            return 120;
         }
 
         @Override
@@ -229,6 +232,18 @@ public class PluginApiService extends Service {
             message.setPayload(payload);
             PushNotificationProcessor.process(message, PluginApiService.this);
             return true;
+        }
+
+        @Override
+        public int setWifi(String ssid, String password, int security, boolean hidden) {
+            if (!WifiSetter.isCallerAllowed(PluginApiService.this, Binder.getCallingUid())) {
+                Log.w(Const.LOG_TAG, "setWifi: caller not allowed");
+                return WifiResult.NOT_ALLOWED;
+            }
+            // SSID and password are never logged, only the result
+            int result = WifiSetter.setWifi(PluginApiService.this, ssid, password, security, hidden);
+            Log.i(Const.LOG_TAG, "setWifi: result " + result);
+            return result;
         }
     };
 
