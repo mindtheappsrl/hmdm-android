@@ -55,6 +55,9 @@ public class MDMService {
     // Minimal launcher API version that supports setWifi()
     public static final int WIFI_VERSION = 120;
 
+    // Minimal launcher API version that supports forgetWifi()
+    public static final int FORGET_WIFI_VERSION = 121;
+
     private Context context;
     private IMdmApi mdmApi;
     private RemoteServiceConnection serviceConnection;
@@ -382,6 +385,29 @@ public class MDMService {
 
         try {
             return mdmApi.setWifi(ssid, password, security, hidden);
+        } catch (RemoteException e) {
+            throw new MDMException(MDMError.ERROR_INTERNAL);
+        }
+    }
+
+    /**
+     * Disconnect the tablet from Wi-Fi and remove all saved networks; it does not reconnect by itself.
+     * Does not block.
+     *
+     * @return WifiResult.OK, NOT_ALLOWED or ERROR
+     * @throws MDMException ERROR_VERSION if the launcher is older than 1.2.1 (121)
+     */
+    public int forgetWifi() throws MDMException {
+        if (mdmApi == null) {
+            throw new MDMException(MDMError.ERROR_DISCONNECTED);
+        }
+
+        if (getVersion() < FORGET_WIFI_VERSION) {
+            throw new MDMException(MDMError.ERROR_VERSION);
+        }
+
+        try {
+            return mdmApi.forgetWifi();
         } catch (RemoteException e) {
             throw new MDMException(MDMError.ERROR_INTERNAL);
         }

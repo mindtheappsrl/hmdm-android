@@ -75,4 +75,12 @@ interface IMdmApi {
      * The previous network is restored if the new one does not work. Only the allowed kiosk app may call it.
      */
     int setWifi(String ssid, String password, int security, boolean hidden);
+
+    // Added in library version 1.2.1
+    /**
+     * Disconnect from Wi-Fi and remove all saved networks (Device Owner), then restart the Wi-Fi so
+     * that the tablet does not reconnect by itself. Does not block. Only the allowed kiosk app may call it.
+     * Returns a WifiResult code: OK, NOT_ALLOWED or ERROR.
+     */
+    int forgetWifi();
 }

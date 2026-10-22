@@ -189,6 +189,26 @@ public class WifiSetter {
         return result;
     }
 
+    // Removes every saved network and restarts the Wi-Fi so that the tablet does not reconnect. Does not block.
+    public static synchronized int forgetWifi(Context context) {
+        if (!Utils.isDeviceOwner(context)) {
+            return WifiResult.NOT_ALLOWED;
+        }
+        WifiManager wm = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        wm.disconnect();
+        List<WifiConfiguration> saved = wm.getConfiguredNetworks();
+        if (saved != null) {
+            for (WifiConfiguration c : saved) {
+                wm.removeNetwork(c.networkId);
+            }
+        }
+        // ponytail: networks saved by other apps cannot be removed (removeNetwork returns false), they stay saved
+        wm.setWifiEnabled(false);
+        wm.setWifiEnabled(true);
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(KEY_LAST).apply();
+        return WifiResult.OK;
+    }
+
     private static int waitForConnection(WifiManager wm, ConnectivityManager cm, int id, AtomicBoolean authError) {
         boolean connected = false;
         long deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS;

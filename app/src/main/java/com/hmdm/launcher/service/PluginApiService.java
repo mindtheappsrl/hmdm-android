@@ -87,10 +87,10 @@ public class PluginApiService extends Service {
 
         @Override
         public int getVersion() {
-            // 1.1.9 - forceConfigUpdateWithCallback(); 1.2.0 (120) - setWifi().
+            // 1.1.9 - forceConfigUpdateWithCallback(); 1.2.0 (120) - setWifi(); 1.2.1 (121) - forgetWifi().
             // Keep in sync with MDMService.CALLBACK_VERSION on the client/SDK side.
             // If this is renumbered when merged upstream, bump CALLBACK_VERSION to match.
-            return 120;
+            return 121;
         }
 
         @Override
@@ -243,6 +243,17 @@ public class PluginApiService extends Service {
             // SSID and password are never logged, only the result
             int result = WifiSetter.setWifi(PluginApiService.this, ssid, password, security, hidden);
             Log.i(Const.LOG_TAG, "setWifi: result " + result);
+            return result;
+        }
+
+        @Override
+        public int forgetWifi() {
+            if (!WifiSetter.isCallerAllowed(PluginApiService.this, Binder.getCallingUid())) {
+                Log.w(Const.LOG_TAG, "forgetWifi: caller not allowed");
+                return WifiResult.NOT_ALLOWED;
+            }
+            int result = WifiSetter.forgetWifi(PluginApiService.this);
+            Log.i(Const.LOG_TAG, "forgetWifi: result " + result);
             return result;
         }
     };
