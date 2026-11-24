@@ -561,6 +561,40 @@ public class Utils {
         return true;
     }
 
+    /**
+     * AB#5480: la posizione di sistema deve restare accesa sui totem Timecloud, perché Android la pretende per cercare
+     * le reti Wi-Fi («Configura Wi-Fi» del totem). Da Device Owner la accende (API 30+ con setLocationEnabled, prima con
+     * LOCATION_MODE) e, da API 28, impedisce di spegnerla da Impostazioni. Va chiamata all'avvio e a ogni applicazione
+     * della configurazione, così vale anche sui totem già registrati. Ignora la voce «GPS» della configurazione del server.
+     */
+    @SuppressWarnings("deprecation")
+    public static boolean keepLocationEnabled(Context context) {
+        if (!isDeviceOwner(context) || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return false;
+        }
+
+        DevicePolicyManager devicePolicyManager = (DevicePolicyManager) context.getSystemService(
+                Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponentName = LegacyUtils.getAdminComponentName(context);
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                devicePolicyManager.setLocationEnabled(adminComponentName, true);
+            } else {
+                devicePolicyManager.setSecureSetting(adminComponentName, Settings.Secure.LOCATION_MODE,
+                        String.valueOf(Settings.Secure.LOCATION_MODE_HIGH_ACCURACY));
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                devicePolicyManager.addUserRestriction(adminComponentName, UserManager.DISALLOW_CONFIG_LOCATION);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            RemoteLogger.log(context, Const.LOG_WARN, "Failed to enable the device location: " + e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
     public static boolean lockUsbStorage(boolean lock, Context context) {
         if (!isDeviceOwner(context) || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             try {
