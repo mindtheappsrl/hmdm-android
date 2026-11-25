@@ -50,8 +50,8 @@ release build stops and says which one: it never falls back to the debug key.
 gradlew :app:assembleOpensourceRelease
 ```
 
-The signed APK is in `app/build/outputs/apk/opensource/release/`. Check it with `apksigner verify --print-certs`: the SHA-256 must be
-the one in `WIFI_ALLOWED_CERTS` (`app/build.gradle`), the Kiosk app must be signed with the same key, otherwise `setWifi()` refuses it.
+The signed APK is in `app/build/outputs/apk/opensource/release/`. Check it with `apksigner verify --print-certs`.
+`setWifi()` checks the caller by package name only (`WIFI_ALLOWED_PACKAGES`); `WIFI_ALLOWED_CERTS` is empty on purpose.
 The launcher is the Device Owner of the totems: it only updates over an app signed with the same key.
 
 ## Building the library

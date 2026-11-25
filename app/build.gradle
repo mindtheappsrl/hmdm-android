@@ -122,10 +122,9 @@ android {
         buildConfigField("String", "LIBRARY_API_KEY", "\"changeme-8gzk321W\"")
         // Apps allowed to call setWifi() (comma separated package names) and the SHA-256 of their signing
         // certificates (comma separated, hex without colons). An empty certificate list checks only the package name.
-        // The certificate is the one of the totem key (Private/AndroidKeys/timecloud-totem.jks, alias timecloud-totem):
-        // the Kiosk must be signed with the same key, so debug builds of the Kiosk are refused.
+        // Left empty on purpose (AB#5506): setWifi() checks the package name only, so Kiosk builds signed with any key are accepted.
         buildConfigField("String", "WIFI_ALLOWED_PACKAGES", "\"com.mindtheapp.timecloudkiosk\"")
-        buildConfigField("String", "WIFI_ALLOWED_CERTS", "\"C7C1B4D533F7DEB00DF0C081557CC617CBB03DA22237DB907D507F5664C1E0AA\"")
+        buildConfigField("String", "WIFI_ALLOWED_CERTS", "\"\"")
         // Use accessibility services to control unwanted apps
         // (this option is banned by Play Protect in some countries!)
         buildConfigField("Boolean", "USE_ACCESSIBILITY", "false")
