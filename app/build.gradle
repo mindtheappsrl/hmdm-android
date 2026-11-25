@@ -29,6 +29,16 @@ repositories {
     mavenCentral()
 }
 
+// Firma della release (AB#5506): la chiave dei totem, la stessa del Kiosk, fuori dal repository.
+// Keystore in Private/AndroidKeys/timecloud-totem.jks; keyAlias, keyPassword e storePassword in
+// Private/AndroidKeys/props/timecloudtotemkey.properties. Se manca uno dei due la build release si ferma.
+def totemKeystoreFile = rootProject.file('../Private/AndroidKeys/timecloud-totem.jks')
+def totemKeyPropertiesFile = rootProject.file('../Private/AndroidKeys/props/timecloudtotemkey.properties')
+def totemKeyProperties = new Properties()
+if (totemKeyPropertiesFile.exists()) {
+    totemKeyPropertiesFile.withInputStream { totemKeyProperties.load(it) }
+}
+
 android {
     compileSdkVersion 34
     defaultConfig {
@@ -41,8 +51,8 @@ android {
         // downgrade the dependency to com.fasterxml.jackson to 2.13.5
         minSdkVersion 26
         targetSdkVersion 34
-        versionCode 16000
-        versionName "6.46"
+        versionCode 16100
+        versionName "6.47"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         dataBinding {
             enabled = true
@@ -112,14 +122,29 @@ android {
         buildConfigField("String", "LIBRARY_API_KEY", "\"changeme-8gzk321W\"")
         // Apps allowed to call setWifi() (comma separated package names) and the SHA-256 of their signing
         // certificates (comma separated, hex without colons). An empty certificate list checks only the package name.
+        // The certificate is the one of the totem key (Private/AndroidKeys/timecloud-totem.jks, alias timecloud-totem):
+        // the Kiosk must be signed with the same key, so debug builds of the Kiosk are refused.
         buildConfigField("String", "WIFI_ALLOWED_PACKAGES", "\"com.mindtheapp.timecloudkiosk\"")
-        buildConfigField("String", "WIFI_ALLOWED_CERTS", "\"\"")
+        buildConfigField("String", "WIFI_ALLOWED_CERTS", "\"C7C1B4D533F7DEB00DF0C081557CC617CBB03DA22237DB907D507F5664C1E0AA\"")
         // Use accessibility services to control unwanted apps
         // (this option is banned by Play Protect in some countries!)
         buildConfigField("Boolean", "USE_ACCESSIBILITY", "false")
     }
+    signingConfigs {
+        if (totemKeystoreFile.exists() && totemKeyPropertiesFile.exists()) {
+            release {
+                storeFile totemKeystoreFile
+                storePassword totemKeyProperties.getProperty('storePassword')
+                keyAlias totemKeyProperties.getProperty('keyAlias')
+                keyPassword totemKeyProperties.getProperty('keyPassword')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (signingConfigs.findByName('release') != null) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable false
@@ -194,4 +219,25 @@ dependencies {
     // JAX-B dependencies for JDK 9+
     implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
     implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def releaseBuild = graph.allTasks.any { it.path.startsWith(':app:') && it.name ==~ /^(assemble|bundle|package).*Release$/ }
+    if (releaseBuild) {
+        def problemi = []
+        if (!totemKeystoreFile.exists()) {
+            problemi << "keystore non trovato: ${totemKeystoreFile.canonicalPath}".toString()
+        }
+        if (!totemKeyPropertiesFile.exists()) {
+            problemi << "file di firma non trovato: ${totemKeyPropertiesFile.canonicalPath}".toString()
+        } else {
+            def mancanti = ['keyAlias', 'keyPassword', 'storePassword'].findAll { (totemKeyProperties.getProperty(it) ?: '').trim().isEmpty() }
+            if (!mancanti.isEmpty()) {
+                problemi << "nel file di firma mancano: ${mancanti.join(', ')}".toString()
+            }
+        }
+        if (!problemi.isEmpty()) {
+            throw new GradleException('Firma di rilascio impossibile (chiave dei totem fuori dal repository): ' + problemi.join('; '))
+        }
+    }
 }

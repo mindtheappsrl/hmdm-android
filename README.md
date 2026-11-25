@@ -37,11 +37,22 @@ To check on a device: `adb shell settings get secure location_mode` must not be 
 
 ## Building the APK
 
-Build the APK after you successfully build the app.
+The release APK is signed with the Timecloud totem key (the same as the Kiosk app), kept outside the repository:
 
-1. Setup the keys for signing the app
-2. Select Build - Generate signed Bundle / APK
-3. Select the place you'd like to save APK
+- keystore: `Private/AndroidKeys/timecloud-totem.jks`
+- alias and passwords: `Private/AndroidKeys/props/timecloudtotemkey.properties` (`keyAlias`, `keyPassword`, `storePassword`)
+
+Both paths are relative to the folder that contains this repository (for example `C:\PROGETTI\Private\AndroidKeys\...` if the
+repository is in `C:\PROGETTI`). If one of the two files is missing, or the properties file lacks one of the three entries, the
+release build stops and says which one: it never falls back to the debug key.
+
+```
+gradlew :app:assembleOpensourceRelease
+```
+
+The signed APK is in `app/build/outputs/apk/opensource/release/`. Check it with `apksigner verify --print-certs`: the SHA-256 must be
+the one in `WIFI_ALLOWED_CERTS` (`app/build.gradle`), the Kiosk app must be signed with the same key, otherwise `setWifi()` refuses it.
+The launcher is the Device Owner of the totems: it only updates over an app signed with the same key.
 
 ## Building the library
 
